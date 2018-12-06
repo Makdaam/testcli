@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/clientcmd"
+
 	appsv1 "github.com/openshift/client-go/apps/clientset/versioned/typed/apps/v1"
 	projectsv1 "github.com/openshift/client-go/project/clientset/versioned/typed/project/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -17,7 +17,6 @@ var (
 
 func doubleReplicas(appClientset *appsv1.AppsV1Client, namespace string) error {
 	//doubles the number of replicas in all Deployment Configs in a namespace
-
 	dcList, err := appClientset.DeploymentConfigs(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return err
@@ -36,7 +35,6 @@ func doubleReplicas(appClientset *appsv1.AppsV1Client, namespace string) error {
 }
 
 func main() {
-
 	flag.Parse()
 	fmt.Println("Config path: ", *kubeconfig)
 	fmt.Println("Increasing replica counts 2x in all DCs")
@@ -56,9 +54,13 @@ func main() {
 	}
 
 	projectList, err := projectClientset.Projects().List(metav1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+
 	for _, project := range projectList.Items {
 		fmt.Printf("Project: %s\n", project.ObjectMeta.Name)
-		doubleReplicas(appClientset, project.ObjectMeta.Name)
+		err := doubleReplicas(appClientset, project.ObjectMeta.Name)
 		if err != nil {
 			panic(err.Error())
 		}
